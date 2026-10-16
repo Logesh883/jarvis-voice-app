@@ -70,6 +70,10 @@ section .head { display: grid; gap: 12px; margin-bottom: 36px; }
 .get { margin-top: 32px; display: grid; gap: 12px; justify-items: start; }
 .get .meta { font: 13px var(--mono); color: var(--muted); }
 .get .meta a { color: var(--muted); }
+.allow { margin-top: 6px; display: flex; gap: 12px; align-items: flex-start; max-width: 520px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); font-size: 15px; color: var(--muted); }
+.allow svg { width: 20px; height: 20px; flex: none; margin-top: 2px; color: var(--warn); }
+.allow b { color: var(--text); }
+.allow .path { font-family: var(--mono); font-size: 13.5px; color: var(--text); white-space: nowrap; }
 
 /* the transcript: what Jarvis heard and said, as in its own window */
 .term { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; box-shadow: 0 30px 80px -40px rgba(30, 40, 110, .45); min-width: 0; }
@@ -94,7 +98,7 @@ section .head { display: grid; gap: 12px; margin-bottom: 36px; }
 @keyframes wv { 0%, 100% { height: 30%; } 50% { height: 100%; } }
 
 /* install steps: a real sequence */
-.steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; counter-reset: s; }
+.steps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; counter-reset: s; }
 .step { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r); padding: 24px; display: grid; gap: 10px; align-content: start; }
 .step::before { counter-increment: s; content: counter(s); font: 700 14px var(--mono); color: var(--signal); width: 30px; height: 30px; border-radius: 50%; border: 1.5px solid var(--signal); display: grid; place-items: center; }
 .step p { color: var(--muted); font-size: 15.5px; }
@@ -133,11 +137,11 @@ footer a { color: var(--muted); }
 
 @media (max-width: 860px) {
   .hero, .split { grid-template-columns: minmax(0, 1fr); }
-  .steps { grid-template-columns: minmax(0, 1fr); }
+  .steps { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .bar nav a:not(.btn) { display: none; }
 }
 @media (max-width: 620px) {
-  .say { grid-template-columns: minmax(0, 1fr); }
+  .say, .steps { grid-template-columns: minmax(0, 1fr); }
   .say div:nth-child(2) { border-top: 1px solid var(--line); }
   .say div:nth-child(odd) { border-right: 0; }
   .log { font-size: 12.5px; padding-inline: 14px; }
@@ -170,6 +174,10 @@ footer a { color: var(--muted); }
           <span id="dlLabel">Download for Mac</span>
         </a>
         <p class="meta"><span id="dlChip">Apple silicon</span> · macOS 12 or later · free · <a id="dlOther" href="https://github.com/Logesh883/jarvis-voice-app/releases/latest/download/Jarvis-x86_64.dmg">Intel Mac?</a></p>
+        <div class="allow" role="note">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>
+          <p><b>The first time you open it, macOS asks you to allow it.</b> If it says it can’t check Jarvis, open <span class="path">System Settings → Privacy &amp; Security</span>, scroll down and press <b>Open Anyway</b> next to Jarvis. You only do this once.</p>
+        </div>
       </div>
     </div>
 
@@ -192,10 +200,11 @@ footer a { color: var(--muted); }
       <div class="head">
         <p class="eyebrow">Install</p>
         <h2>Download, open, start talking</h2>
-        <p class="lede">No terminal commands and nothing to clone. The app brings its own speech engine and sets the rest up the first time you open it.</p>
+        <p class="lede">No terminal commands and nothing to clone. The app brings its own speech engine and sets the rest up the first time you open it. Later, macOS asks once to let Jarvis control Terminal and to use the microphone: press Allow / OK.</p>
       </div>
       <div class="steps">
         <div class="step"><h3>Open the download</h3><p>Open <b>Jarvis.dmg</b> and drag Jarvis into Applications. If you open it straight from the disk image, it offers to move itself.</p></div>
+        <div class="step"><h3>Allow it to open</h3><p>The first time, macOS may say it can’t check the app. Go to <b>System Settings → Privacy &amp; Security</b>, scroll down, press <b>Open Anyway</b> next to Jarvis and confirm.</p></div>
         <div class="step"><h3>Follow Get started</h3><p>The first window walks you through the rest, one button per step: install Claude Code, log in, get VS Code, and pick your projects.</p></div>
         <div class="step"><h3>Say “Hi Jarvis”</h3><p>Press Start and allow the microphone. Then say “Hi Jarvis, open” and one of your project names.</p></div>
       </div>
