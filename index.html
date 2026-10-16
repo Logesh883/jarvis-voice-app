@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Jarvis Voice</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Talk to Claude Code on your Mac. Say “Hi Jarvis, open abc” and VS Code opens with Claude ready. Hear “abc-claude is done” when it finishes. Speech stays on your Mac.">
+<meta property="og:title" content="Jarvis Voice">
+<meta property="og:description" content="Talk to Claude Code on your Mac, and hear when it’s done.">
+<meta property="og:image" content="icon.png">
+<link rel="icon" href="icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;700;800&family=Atkinson+Hyperlegible+Next:wght@400;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: a two-column hero (pitch | live transcript), then plain full-width bands, each with one job. */
+:root {
+  --ink: #f4f5fb; --panel: #ffffff; --panel2: #eceef7; --line: #dcdfec;
+  --text: #121528; --muted: #575e7d; --signal: #3c5ce6; --violet: #7a43d6; --ok: #16865a; --warn: #a86a00;
+  --on-signal: #ffffff;
+  --display: "Schibsted Grotesk", "Helvetica Neue", Arial, sans-serif;
+  --body: "Atkinson Hyperlegible Next", -apple-system, "Segoe UI", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --r: 14px;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --ink: #0c0e16; --panel: #141826; --panel2: #1a1f30; --line: #262c40;
+  --text: #e8eaf4; --muted: #959cb5; --signal: #7690ff; --violet: #a874f7; --ok: #3ecf8e; --warn: #f2b14a;
+  --on-signal: #0c0e16; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --ink: #0c0e16; --panel: #141826; --panel2: #1a1f30; --line: #262c40;
+  --text: #e8eaf4; --muted: #959cb5; --signal: #7690ff; --violet: #a874f7; --ok: #3ecf8e; --warn: #f2b14a;
+  --on-signal: #0c0e16; color-scheme: dark; }
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--ink); color: var(--text); font: 17px/1.6 var(--body); }
+a { color: var(--signal); }
+a:focus-visible, button:focus-visible { outline: 2px solid var(--signal); outline-offset: 3px; border-radius: 6px; }
+.wrap { max-width: 1120px; margin: 0 auto; padding-left: max(20px, env(safe-area-inset-left, 0px)); padding-right: max(20px, env(safe-area-inset-right, 0px)); }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; letter-spacing: -.02em; }
+h2 { font-size: clamp(28px, 4vw, 40px); line-height: 1.1; font-weight: 800; }
+h3 { font-size: 19px; font-weight: 700; letter-spacing: -.01em; }
+p { margin: 0; }
+.eyebrow { font: 600 12px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.lede { color: var(--muted); max-width: 60ch; }
+section { padding-block: clamp(56px, 9vw, 104px); border-top: 1px solid var(--line); }
+section .head { display: grid; gap: 12px; margin-bottom: 36px; }
+
+/* top bar */
+.bar { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-block: 18px; }
+.brand { display: flex; align-items: center; gap: 10px; font: 700 18px var(--display); color: var(--text); text-decoration: none; letter-spacing: -.01em; }
+.brand img { width: 34px; height: 34px; border-radius: 9px; }
+.bar nav { display: flex; align-items: center; gap: 22px; font-size: 15px; }
+.bar nav a { color: var(--muted); text-decoration: none; }
+.bar nav a:hover { color: var(--text); }
+.bar nav .btn { color: var(--on-signal); }
+
+.btn { display: inline-flex; align-items: center; gap: 10px; background: var(--signal); color: var(--on-signal); font: 700 16px var(--display); text-decoration: none; padding: 13px 22px; border-radius: 12px; border: 0; cursor: pointer; transition: transform .15s, filter .15s; }
+.btn:hover { filter: brightness(1.08); transform: translateY(-1px); }
+.btn.small { font-size: 14px; padding: 8px 14px; border-radius: 10px; }
+.btn svg { width: 20px; height: 20px; flex: none; }
+
+/* hero */
+.hero { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); gap: clamp(32px, 5vw, 64px); align-items: center; padding-block: clamp(36px, 7vw, 88px) clamp(56px, 8vw, 96px); }
+.hero h1 { font-size: clamp(40px, 6.4vw, 72px); line-height: 1; font-weight: 800; letter-spacing: -.035em; }
+.hero h1 em { font-style: normal; color: var(--signal); }
+.hero .lede { margin-top: 22px; font-size: 19px; }
+.get { margin-top: 32px; display: grid; gap: 12px; justify-items: start; }
+.get .meta { font: 13px var(--mono); color: var(--muted); }
+.get .meta a { color: var(--muted); }
+
+/* the transcript: what Jarvis heard and said, as in its own window */
+.term { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; box-shadow: 0 30px 80px -40px rgba(30, 40, 110, .45); min-width: 0; }
+.term .top { display: flex; align-items: center; gap: 7px; padding: 12px 14px; border-bottom: 1px solid var(--line); background: var(--panel2); }
+.term .top i { width: 11px; height: 11px; border-radius: 50%; background: var(--line); }
+.term .top span { margin-left: 8px; font: 12px var(--mono); color: var(--muted); }
+.log { padding: 18px 18px 8px; font: 13.5px/1.55 var(--mono); display: grid; gap: 10px; }
+.log .ln { display: grid; grid-template-columns: 46px 22px minmax(0, 1fr); gap: 6px; }
+.log time { color: var(--muted); font-variant-numeric: tabular-nums; }
+.log .heard q { color: var(--text); quotes: "“" "”"; }
+.log .said { color: var(--signal); }
+.log .act { color: var(--muted); }
+.log .done { color: var(--ok); }
+.status { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin: 10px 0 0; padding: 10px 18px; border-top: 1px solid var(--line); background: var(--panel2); font: 12px var(--mono); color: var(--muted); }
+.status b { color: var(--text); font-weight: 600; background: var(--signal); color: var(--on-signal); padding: 1px 7px; border-radius: 4px; }
+.status .sep { opacity: .5; }
+.status .live { color: var(--ok); display: inline-flex; align-items: center; gap: 6px; }
+.wave { display: inline-flex; align-items: center; gap: 2px; height: 14px; }
+.wave s { width: 3px; height: 40%; background: var(--ok); border-radius: 2px; animation: wv 1.1s ease-in-out infinite; }
+.wave s:nth-child(2) { animation-delay: -.2s; } .wave s:nth-child(3) { animation-delay: -.45s; }
+.wave s:nth-child(4) { animation-delay: -.7s; } .wave s:nth-child(5) { animation-delay: -.9s; }
+@keyframes wv { 0%, 100% { height: 30%; } 50% { height: 100%; } }
+
+/* install steps: a real sequence */
+.steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; counter-reset: s; }
+.step { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r); padding: 24px; display: grid; gap: 10px; align-content: start; }
+.step::before { counter-increment: s; content: counter(s); font: 700 14px var(--mono); color: var(--signal); width: 30px; height: 30px; border-radius: 50%; border: 1.5px solid var(--signal); display: grid; place-items: center; }
+.step p { color: var(--muted); font-size: 15.5px; }
+.handled { margin-top: 28px; display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 10px 28px; color: var(--muted); font-size: 15.5px; }
+.handled div { display: flex; gap: 10px; align-items: baseline; }
+.handled div::before { content: "✓"; color: var(--ok); font-weight: 700; }
+
+/* what you can say */
+.say { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; background: var(--panel); }
+.say div { padding: 18px 22px; border-top: 1px solid var(--line); display: grid; gap: 4px; min-width: 0; }
+.say div:nth-child(-n+2) { border-top: 0; }
+.say div:nth-child(odd) { border-right: 1px solid var(--line); }
+.say q { font: 600 16px var(--mono); color: var(--text); quotes: "“" "”"; }
+.say span { color: var(--muted); font-size: 15px; }
+
+/* privacy */
+.split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(28px, 5vw, 64px); align-items: start; }
+.facts { display: grid; gap: 18px; }
+.facts div { display: grid; gap: 4px; padding-left: 18px; border-left: 2px solid var(--line); }
+.facts p { color: var(--muted); font-size: 15.5px; }
+
+/* questions */
+.faq { display: grid; gap: 10px; max-width: 780px; }
+.faq details { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px 20px; }
+.faq summary { cursor: pointer; font: 700 17px var(--display); letter-spacing: -.01em; list-style: none; display: flex; justify-content: space-between; gap: 16px; }
+.faq summary::-webkit-details-marker { display: none; }
+.faq summary::after { content: "+"; color: var(--muted); font-weight: 500; }
+.faq details[open] summary::after { content: "–"; }
+.faq details p { color: var(--muted); margin-top: 10px; font-size: 15.5px; }
+.faq code, .facts code { font: 14px var(--mono); background: var(--panel2); padding: 1px 6px; border-radius: 5px; }
+
+.cta { text-align: center; display: grid; justify-items: center; gap: 18px; }
+footer { border-top: 1px solid var(--line); padding-block: 28px; color: var(--muted); font-size: 14px; }
+footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; }
+footer a { color: var(--muted); }
+
+@media (max-width: 860px) {
+  .hero, .split { grid-template-columns: minmax(0, 1fr); }
+  .steps { grid-template-columns: minmax(0, 1fr); }
+  .bar nav a:not(.btn) { display: none; }
+}
+@media (max-width: 620px) {
+  .say { grid-template-columns: minmax(0, 1fr); }
+  .say div:nth-child(2) { border-top: 1px solid var(--line); }
+  .say div:nth-child(odd) { border-right: 0; }
+  .log { font-size: 12.5px; padding-inline: 14px; }
+  .log .ln { grid-template-columns: 40px 20px minmax(0, 1fr); }
+}
+@media (prefers-reduced-motion: reduce) { .wave s { animation: none; height: 60%; } .btn { transition: none; } }
+</style>
+</head>
+<body>
+
+<header class="wrap bar">
+  <a class="brand" href="#top"><img src="icon.png" alt="">Jarvis Voice</a>
+  <nav>
+    <a href="#how">How it works</a>
+    <a href="#say">What you can say</a>
+    <a href="#privacy">Privacy</a>
+    <a class="btn small dl" href="https://github.com/Logesh883/jarvis-voice-app/releases/latest/download/Jarvis-arm64.dmg">Download</a>
+  </nav>
+</header>
+
+<main id="top">
+  <div class="wrap hero">
+    <div>
+      <p class="eyebrow">For Claude Code on the Mac</p>
+      <h1 style="margin-top:16px">Talk to Claude Code. <em>Hear when it’s done.</em></h1>
+      <p class="lede">Say “Hi Jarvis, open abc” and your project opens in VS Code with Claude ready. Keep talking to give it work. When it finishes, Jarvis tells you which tab is done and what it did, so you can step away from the screen.</p>
+      <div class="get">
+        <a class="btn dl" id="dlMain" href="https://github.com/Logesh883/jarvis-voice-app/releases/latest/download/Jarvis-arm64.dmg">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M6 10l6 6 6-6M5 21h14"/></svg>
+          <span id="dlLabel">Download for Mac</span>
+        </a>
+        <p class="meta"><span id="dlChip">Apple silicon</span> · macOS 12 or later · free · <a id="dlOther" href="https://github.com/Logesh883/jarvis-voice-app/releases/latest/download/Jarvis-x86_64.dmg">Intel Mac?</a></p>
+      </div>
+    </div>
+
+    <div class="term" role="img" aria-label="The Jarvis window: it hears “Hi Jarvis, open abc”, opens VS Code with a Claude tab, then announces “abc-claude is done” with a one-line summary.">
+      <div class="top"><i></i><i></i><i></i><span>Jarvis — abc</span></div>
+      <div class="log">
+        <div class="ln heard"><time>09:41</time><span>👂</span><q>Hi Jarvis, open abc</q></div>
+        <div class="ln act"><time>09:41</time><span>›</span><span>VS Code → ~/code/abc · tab abc-claude</span></div>
+        <div class="ln heard"><time>09:42</time><span>👂</span><q>why is the login test failing?</q></div>
+        <div class="ln act"><time>09:42</time><span>›</span><span>sent to abc-claude</span></div>
+        <div class="ln said"><time>09:47</time><span>🗣</span><span><span class="done">abc-claude is done.</span> The token check compared expiry in seconds with milliseconds. I fixed the conversion and the test passes.</span></div>
+        <div class="ln heard"><time>09:48</time><span>👂</span><q>approve</q></div>
+      </div>
+      <div class="status"><b>JARVIS</b><span>abc → abc-claude</span><span class="sep">│</span><span>Claude: working… · plan mode</span><span class="sep">│</span><span class="live"><span class="wave" aria-hidden="true"><s></s><s></s><s></s><s></s><s></s></span>hearing you</span></div>
+    </div>
+  </div>
+
+  <section id="how">
+    <div class="wrap">
+      <div class="head">
+        <p class="eyebrow">Install</p>
+        <h2>Download, open, start talking</h2>
+        <p class="lede">No terminal commands and nothing to clone. The app brings its own speech engine and sets the rest up the first time you open it.</p>
+      </div>
+      <div class="steps">
+        <div class="step"><h3>Open the download</h3><p>Open <b>Jarvis.dmg</b> and drag Jarvis into Applications. If you open it straight from the disk image, it offers to move itself.</p></div>
+        <div class="step"><h3>Follow Get started</h3><p>The first window walks you through the rest, one button per step: install Claude Code, log in, get VS Code, and pick your projects.</p></div>
+        <div class="step"><h3>Say “Hi Jarvis”</h3><p>Press Start and allow the microphone. Then say “Hi Jarvis, open” and one of your project names.</p></div>
+      </div>
+      <div class="handled">
+        <div>Speech recognition, built in (Whisper, runs on your Mac)</div>
+        <div>Spoken “is done” alerts added to Claude Code</div>
+        <div>The VS Code extension that opens Claude tabs</div>
+        <div>Claude suggests your projects and how to say them</div>
+      </div>
+    </div>
+  </section>
+
+  <section id="say">
+    <div class="wrap">
+      <div class="head">
+        <p class="eyebrow">Voice commands</p>
+        <h2>What you can say</h2>
+        <p class="lede">Start with “Hi Jarvis”. For 30 seconds after each command you can just keep talking. Anything that isn’t a command goes word for word to the Claude tab you used last.</p>
+      </div>
+      <div class="say">
+        <div><q>open abc</q><span>VS Code on the repo, with its Claude tab</span></div>
+        <div><q>in abc, check my last worked item</q><span>Types it into abc’s Claude tab and presses Enter</span></div>
+        <div><q>plan the Prisma upgrade</q><span>Plan mode: Claude researches and proposes before it edits</span></div>
+        <div><q>approve · always allow · reject</q><span>Answers Claude’s permission question</span></div>
+        <div><q>run tests</q><span>Runs the project’s test command; you hear “finished” or “failed”</span></div>
+        <div><q>switch to orbit</q><span>Your messages go to another project from now on</span></div>
+        <div><q>resume abc</q><span>Picks up that tab’s last Claude conversation</span></div>
+        <div><q>dictate</q><span>Speak freely; the text is pasted into the front window</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="privacy">
+    <div class="wrap split">
+      <div class="head" style="margin:0">
+        <p class="eyebrow">Privacy</p>
+        <h2>Your voice stays on your Mac</h2>
+        <p class="lede">Jarvis transcribes speech with a local Whisper model. No audio is uploaded, and there’s no account to make. The only things that leave your Mac are the messages you send to Claude, through your own Claude Code.</p>
+      </div>
+      <div class="facts">
+        <div><h3>Local speech model</h3><p>Downloaded once on first start, 150 to 500 MB depending on the accuracy you choose.</p></div>
+        <div><h3>Nothing listening on the network</h3><p>The app talks to itself on <code>127.0.0.1</code> only, and every request needs a secret token.</p></div>
+        <div><h3>Project suggestions on request</h3><p>“Find my projects” shows Claude your repo names, top-level files and READMEs, only when you press it. Claude gets no tools, so it can’t read or change anything else.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="faq">
+    <div class="wrap">
+      <div class="head"><p class="eyebrow">Questions</p><h2>Before you download</h2></div>
+      <div class="faq">
+        <details><summary>What do I need?</summary><p>A Mac with macOS 12 or later, and a Claude account for Claude Code (Pro, Max, Team or Enterprise, or an API key). Apple silicon runs the speech model fastest. If Claude Code isn’t installed, the app installs it for you.</p></details>
+        <details><summary>Do I need VS Code?</summary><p>It’s recommended: each project gets a VS Code window with its Claude tabs in the terminal panel. If you’d rather not, choose “Use Terminal instead” and Claude opens in Terminal windows.</p></details>
+        <details><summary>macOS says it can’t check the app for malicious software</summary><p>Open System Settings → Privacy &amp; Security, scroll down, and press <b>Open Anyway</b> next to Jarvis. You only need to do this once.</p></details>
+        <details><summary>Why does it ask about Terminal and the microphone?</summary><p>The assistant runs in a Terminal window so you can see what it heard and said. macOS asks once to let Jarvis control Terminal, and once to let Terminal use the microphone.</p></details>
+        <details><summary>Can I call it something other than Jarvis?</summary><p>Yes. Say “Hi Jarvis, change your name to Friday”, or change it in Settings. Short, distinct names are recognised best.</p></details>
+        <details><summary>How do I update or uninstall?</summary><p>To update, download the new version and replace the app; your projects and settings stay. To uninstall, drag Jarvis to the Trash and delete the <code>~/.jarvis</code> folder.</p></details>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap cta">
+      <img src="icon.png" alt="" width="88" height="88" style="border-radius:22px">
+      <h2>Give Claude Code a voice</h2>
+      <a class="btn dl" href="https://github.com/Logesh883/jarvis-voice-app/releases/latest/download/Jarvis-arm64.dmg">Download for Mac</a>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>Jarvis Voice · Not affiliated with Anthropic</span>
+    <span><a href="https://github.com/Logesh883/jarvis-voice-app/releases">All versions and release notes</a></span>
+  </div>
+</footer>
+
+<script>
+// Intel Macs get the Intel download first. Chrome and Edge can tell; Safari and Firefox
+// can't, so they keep Apple silicon (most Macs sold since 2020) with the Intel link beside it.
+(async () => {
+  const base = "https://github.com/Logesh883/jarvis-voice-app/releases/latest/download/";
+  try {
+    const ua = navigator.userAgentData;
+    if (!ua || !ua.getHighEntropyValues) return;
+    const { architecture, platform } = await ua.getHighEntropyValues(["architecture"]);
+    if (platform !== "macOS" || architecture !== "x86") return;
+    document.querySelectorAll("a.dl").forEach((a) => { a.href = base + "Jarvis-x86_64.dmg"; });
+    document.getElementById("dlChip").textContent = "Intel";
+    const other = document.getElementById("dlOther");
+    other.textContent = "Apple silicon?"; other.href = base + "Jarvis-arm64.dmg";
+  } catch (e) { /* keep the default */ }
+})();
+</script>
+</body>
+</html>
